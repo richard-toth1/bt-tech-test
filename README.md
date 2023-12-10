@@ -17,5 +17,7 @@
 * Prices do not need to be `decimal` in DB
 * Only sellers are able to post auctions
 * Only buyers are able to post bids
+* Bids must increase in value, startingPrice is inclusive
 ## Shortcuts
 * Missing cleanup for unused MediaObjects (store createdAt -> background job periodically cleans old records not linked to auctions)
+* Race condition with prices not handled when placing bids

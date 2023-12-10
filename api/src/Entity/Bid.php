@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use App\Repository\BidRepository;
+use App\Validator\MinimumBid;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -17,6 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 )]
 #[Get]
 #[Post(security: "is_granted('".User::ROLE_BUYER."')")]
+#[MinimumBid]
 class Bid implements OwnedEntityInterface
 {
     #[ORM\Id]

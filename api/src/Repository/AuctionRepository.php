@@ -20,4 +20,18 @@ class AuctionRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Auction::class);
     }
+
+    public function findCurrentPrice(int $id): int
+    {
+        return $this->createQueryBuilder('a')
+            ->select('MAX(GREATEST(a.startingPrice - 1, b.price))')
+            ->leftJoin('a.bids', 'b')
+            ->where('a = :id')
+            ->setParameters([
+                'id' => $id,
+            ])
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
 }
