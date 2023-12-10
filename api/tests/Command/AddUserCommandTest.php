@@ -5,6 +5,7 @@ namespace App\Tests\Command;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -47,12 +48,18 @@ final class AddUserCommandTest extends KernelTestCase
         $this->executeCommand(self::BUYER);
     }
 
-    public function testSkipIfInvalidDoesNotThrow(): void
+    /**
+     * @dataProvider addUserProvider
+     */
+    public function testSkipIfInvalidDoesNotThrow(array $user, bool $expectException): void
     {
-        $this->executeCommand(self::BUYER);
-        $commandTester = $this->executeCommand([...self::BUYER, '--skip-if-invalid' => true]);
+        $commandTester = $this->executeCommand([...$user, '--skip-if-invalid' => true]);
 
-        $this->assertEquals(0, $commandTester->getStatusCode());
+        $this->assertEquals(Command::SUCCESS, $commandTester->getStatusCode());
+
+        if (!$expectException) {
+            $this->assertUserCreated($user);
+        }
     }
 
     public function addUserProvider(): array

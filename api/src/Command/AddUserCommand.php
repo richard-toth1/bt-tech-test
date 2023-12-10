@@ -47,9 +47,6 @@ final class AddUserCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if ($input->getOption('skip-if-invalid')) {
-            return Command::SUCCESS;
-        }
         /** @var string $username */
         $username = $input->getArgument('username');
         /** @var string $plainPassword */
