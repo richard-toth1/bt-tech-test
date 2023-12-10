@@ -37,9 +37,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Auction::class, orphanRemoval: true)]
     private Collection $auctions;
 
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Bid::class, orphanRemoval: true)]
+    private Collection $bids;
+
     public function __construct()
     {
         $this->auctions = new ArrayCollection();
+        $this->bids = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -136,6 +140,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($auction->getOwner() === $this) {
                 $auction->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Bid>
+     */
+    public function getBids(): Collection
+    {
+        return $this->bids;
+    }
+
+    public function addBid(Bid $bid): static
+    {
+        if (!$this->bids->contains($bid)) {
+            $this->bids->add($bid);
+            $bid->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBid(Bid $bid): static
+    {
+        if ($this->bids->removeElement($bid)) {
+            // set the owning side to null (unless already changed)
+            if ($bid->getOwner() === $this) {
+                $bid->setOwner(null);
             }
         }
 

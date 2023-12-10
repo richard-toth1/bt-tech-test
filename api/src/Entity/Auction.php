@@ -3,12 +3,15 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Enum\AuctionStatus;
 use App\Repository\AuctionRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -19,6 +22,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[GetCollection]
 #[Post(security: "is_granted('".User::ROLE_SELLER."')")]
 #[Put(security: 'object.owner == user')]
+#[Delete(security: 'object.owner == user')]
 class Auction
 {
     #[ORM\Id]
@@ -55,6 +59,14 @@ class Auction
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
     private ?User $owner = null;
+
+    #[ORM\OneToMany(mappedBy: 'auction', targetEntity: Bid::class, orphanRemoval: true)]
+    private Collection $bids;
+
+    public function __construct()
+    {
+        $this->bids = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -139,6 +151,36 @@ class Auction
     public function setOwner(?User $owner): static
     {
         $this->owner = $owner;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Bid>
+     */
+    public function getBids(): Collection
+    {
+        return $this->bids;
+    }
+
+    public function addBid(Bid $bid): static
+    {
+        if (!$this->bids->contains($bid)) {
+            $this->bids->add($bid);
+            $bid->setAuction($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBid(Bid $bid): static
+    {
+        if ($this->bids->removeElement($bid)) {
+            // set the owning side to null (unless already changed)
+            if ($bid->getAuction() === $this) {
+                $bid->setAuction(null);
+            }
+        }
 
         return $this;
     }
