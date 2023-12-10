@@ -14,53 +14,66 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AuctionRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['auction:read']],
+    denormalizationContext: ['groups' => ['auction:write']],
+    collectDenormalizationErrors: true,
+)]
 #[Get]
 #[GetCollection]
 #[Post(security: "is_granted('".User::ROLE_SELLER."')")]
 #[Put(security: 'object.owner == user')]
 #[Delete(security: 'object.owner == user')]
-class Auction
+class Auction implements OwnedEntityInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['auction:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
+    #[Groups(['auction:read', 'auction:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
+    #[Groups(['auction:read', 'auction:write'])]
     private ?string $description = null;
 
     #[ORM\ManyToOne]
     #[Assert\NotNull]
+    #[Groups(['auction:read', 'auction:write'])]
     private ?MediaObject $picture = null;
 
     #[ORM\Column]
     #[Assert\NotNull]
     #[Assert\Positive]
+    #[Groups(['auction:read', 'auction:write'])]
     private ?int $startingPrice = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotNull]
+    #[Groups(['auction:read', 'auction:write'])]
     private ?\DateTimeInterface $closingTime = null;
 
     #[ORM\Column(type: 'string', enumType: AuctionStatus::class)]
-    #[Assert\NotNull]
+    #[Groups(['auction:read', 'auction:write'])]
+    #[Assert\Type(type: AuctionStatus::class)]
     private ?AuctionStatus $auctionStatus = null;
 
     #[ORM\ManyToOne(inversedBy: 'auctions')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull]
+    #[Groups(['auction:read'])]
     private ?User $owner = null;
 
     #[ORM\OneToMany(mappedBy: 'auction', targetEntity: Bid::class, orphanRemoval: true)]
+    #[Groups(['auction:read'])]
     private Collection $bids;
 
     public function __construct()

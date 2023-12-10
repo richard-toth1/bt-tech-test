@@ -4,34 +4,42 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\BidRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: BidRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['bid:read']],
+    denormalizationContext: ['groups' => ['bid:write']]
+)]
 #[Get]
-#[GetCollection]
 #[Post(security: "is_granted('".User::ROLE_BUYER."')")]
-#[Put(security: 'object.owner == user')]
-class Bid
+class Bid implements OwnedEntityInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['bid:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'bids')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
+    #[Groups(['bid:read', 'bid:write'])]
     private ?Auction $auction = null;
 
     #[ORM\ManyToOne(inversedBy: 'bids')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['bid:read'])]
     private ?User $owner = null;
 
     #[ORM\Column]
+    #[Assert\NotNull]
+    #[Assert\Positive]
+    #[Groups(['bid:read', 'bid:write'])]
     private ?int $price = null;
 
     public function getId(): ?int
