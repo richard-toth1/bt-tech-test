@@ -12,7 +12,10 @@
   * Shortcut: `./sf.sh`
 * `docker compose exec php bin/phpunit`
 * `docker compose exec php composer`
+* `docker compose exec php php vendor/bin/php-cs-fixer fix`
 ## Assumptions
 * Prices do not need to be `decimal` in DB
+* Only sellers are able to post auctions
+* Only buyers are able to post bids
 ## Shortcuts
-* Missing cleanup for unused MediaObjects (store createdAt -> background job periodically cleans old records not linked to products)
+* Missing cleanup for unused MediaObjects (store createdAt -> background job periodically cleans old records not linked to auctions)

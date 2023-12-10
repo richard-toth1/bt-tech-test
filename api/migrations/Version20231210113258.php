@@ -14,7 +14,7 @@ final class Version20231210113258 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Add auction entity';
     }
 
     public function up(Schema $schema): void
