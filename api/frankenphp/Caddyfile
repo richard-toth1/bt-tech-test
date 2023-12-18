@@ -51,6 +51,22 @@
 	# Disable Topics tracking if not enabled explicitly: https://github.com/jkarlin/topics
 	header ?Permissions-Policy "browsing-topics=()"
 
+	@client expression ( \
+			({header.Accept}.matches('\\btext/html\\b') || {path}.startsWith('/static/')) \
+			&& !{header.Accept}.startsWith('*.*') \
+			&& !{path}.startsWith('/admin') \
+			&& !{path}.startsWith('/_next') \
+			&& !{path}.matches('(?i)(?:^/docs|^/graphql|^/bundles/|^/_profiler|^/_wdt|\\.(?:json|html$|csv$|ya?ml$|xml$))') \
+		) \
+		|| {path} == '/nofavicon.ico' \
+		|| {path} == '/logo512.png' \
+		|| {path} == '/logo192.png' \
+		|| {path} == '/manifest.json' \
+		|| {path} == '/ws' \
+		|| {path} == '/sockjs-node'
+
+	reverse_proxy @client http://client:3000
+
 	# Matches requests for HTML documents, for static files and for Next.js files,
 	# except for known API paths and paths with extensions handled by API Platform
 	@pwa expression `(
