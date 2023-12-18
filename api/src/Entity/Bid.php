@@ -4,8 +4,10 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Repository\BidRepository;
+use App\Validator\BidClosingTime;
 use App\Validator\MinimumBid;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -17,8 +19,10 @@ use Symfony\Component\Validator\Constraints as Assert;
     denormalizationContext: ['groups' => ['bid:write']]
 )]
 #[Get]
+#[GetCollection]
 #[Post(security: "is_granted('".User::ROLE_BUYER."')")]
 #[MinimumBid]
+#[BidClosingTime]
 class Bid implements OwnedEntityInterface
 {
     #[ORM\Id]
@@ -41,7 +45,7 @@ class Bid implements OwnedEntityInterface
     #[ORM\Column]
     #[Assert\NotNull]
     #[Assert\Positive]
-    #[Groups(['bid:read', 'bid:write'])]
+    #[Groups(['bid:read', 'bid:write', 'auction:read'])]
     private ?int $price = null;
 
     public function getId(): ?int
@@ -57,6 +61,7 @@ class Bid implements OwnedEntityInterface
     public function setAuction(?Auction $auction): static
     {
         $this->auction = $auction;
+        $auction?->addBid($this);
 
         return $this;
     }
