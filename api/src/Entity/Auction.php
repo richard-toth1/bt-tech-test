@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -10,24 +12,36 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Enum\AuctionStatus;
 use App\Repository\AuctionRepository;
+use App\Validator\AuctionModifiable;
+use App\Validator\ClosingTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AuctionRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ApiResource(
-    normalizationContext: ['groups' => ['auction:read']],
+    normalizationContext: [
+        'groups' => ['auction:read'],
+        DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i',
+    ],
     denormalizationContext: ['groups' => ['auction:write']],
     collectDenormalizationErrors: true,
+    mercure: true
 )]
 #[Get]
 #[GetCollection]
 #[Post(security: "is_granted('".User::ROLE_SELLER."')")]
-#[Put(security: 'object.owner == user')]
-#[Delete(security: 'object.owner == user')]
+#[Put(security: 'object.getOwner() == user')]
+#[Delete(security: 'object.getOwner() == user')]
+#[ApiFilter(SearchFilter::class, properties: ['title' => 'partial', 'description' => 'partial'])]
+#[\App\Validator\AuctionStatus]
+#[ClosingTime]
+#[AuctionModifiable]
 class Auction implements OwnedEntityInterface
 {
     #[ORM\Id]
@@ -75,6 +89,9 @@ class Auction implements OwnedEntityInterface
     #[ORM\OneToMany(mappedBy: 'auction', targetEntity: Bid::class, orphanRemoval: true)]
     #[Groups(['auction:read'])]
     private Collection $bids;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $lastModified = null;
 
     public function __construct()
     {
@@ -179,6 +196,7 @@ class Auction implements OwnedEntityInterface
     public function addBid(Bid $bid): static
     {
         if (!$this->bids->contains($bid)) {
+            $this->updateLastModified();
             $this->bids->add($bid);
             $bid->setAuction($this);
         }
@@ -189,6 +207,7 @@ class Auction implements OwnedEntityInterface
     public function removeBid(Bid $bid): static
     {
         if ($this->bids->removeElement($bid)) {
+            $this->updateLastModified();
             // set the owning side to null (unless already changed)
             if ($bid->getAuction() === $this) {
                 $bid->setAuction(null);
@@ -196,5 +215,17 @@ class Auction implements OwnedEntityInterface
         }
 
         return $this;
+    }
+
+    public function getLastModified(): \DateTimeInterface
+    {
+        return $this->lastModified;
+    }
+
+    #[ORM\PreUpdate]
+    #[ORM\PrePersist]
+    public function updateLastModified(): void
+    {
+        $this->lastModified = new \DateTime();
     }
 }
