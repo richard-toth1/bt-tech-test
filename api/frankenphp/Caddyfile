@@ -65,22 +65,7 @@
 		|| {path} == '/ws' \
 		|| {path} == '/sockjs-node'
 
-	reverse_proxy @client http://client:3000
-
-	# Matches requests for HTML documents, for static files and for Next.js files,
-	# except for known API paths and paths with extensions handled by API Platform
-	@pwa expression `(
-			header({'Accept': '*text/html*'})
-			&& !path(
-				'/docs*', '/graphql*', '/bundles*', '/contexts*', '/media*', '/_profiler*', '/_wdt*',
-				'*.json*', '*.html', '*.csv', '*.yml', '*.yaml', '*.xml'
-			)
-		)
-		|| path('/favicon.ico', '/manifest.json', '/robots.txt', '/_next*', '/sitemap*')`
-
-	# Comment the following line if you don't want Next.js to catch requests for HTML documents.
-	# In this case, they will be handled by the PHP app.
-	reverse_proxy @pwa http://{$PWA_UPSTREAM}
+	reverse_proxy @client http://{$CLIENT_UPSTREAM}
 
 	php_server
 }
