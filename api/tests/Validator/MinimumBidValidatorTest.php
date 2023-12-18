@@ -72,7 +72,13 @@ final class MinimumBidValidatorTest extends ConstraintValidatorTestCase
             ->willReturn(self::CURRENT_AUCTION_PRICE)
         ;
 
-        $this->validator->validate($bid, new MinimumBid());
+        $constraint = new MinimumBid();
+        $this->validator->validate($bid, $constraint);
+
+        $this->buildViolation($constraint->message)
+            ->atPath('property.path.price')
+            ->setParameter('{{ minimumBid }}', self::CURRENT_AUCTION_PRICE + 1)
+            ->assertRaised();
     }
 
     public function dataProviderInvalidCases(): array

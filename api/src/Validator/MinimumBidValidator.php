@@ -32,6 +32,7 @@ final class MinimumBidValidator extends ConstraintValidator
             return;
         }
         $this->context->buildViolation($constraint->message)
+            ->atPath('price')
             ->setParameter('{{ minimumBid }}', $currentPrice + 1)
             ->addViolation();
     }
